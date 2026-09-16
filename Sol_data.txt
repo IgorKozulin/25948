@@ -1,0 +1,6 @@
+Host ccfit
+    HostName ccfit.nsu.ru
+    User e.sergeeva5
+    IdentityFile C:\Users\Elina\.ssh\gitnsu
+    PubkeyAcceptedAlgorithms +ssh-rsa
+    HostkeyAlgorithms +ssh-rsa
