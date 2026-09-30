@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include <getopt.h>
 #include <limits.h>
 #include <time.h>
@@ -16,7 +17,36 @@ struct opt_rec {
     char *arg;
 };
 
+/* Ручное время, если пользователь передал -T HH:MM */
+static char *manual_time = NULL;
+
+/* Проверка: строка похожа на время (H:MM, HH:MM, HH:MM:SS) */
+int is_time_arg(const char *s) {
+    int len = (int)strlen(s);
+    /* H:MM */
+    if (len == 4 && s[1] == ':' && isdigit(s[0]) && isdigit(s[2]) && isdigit(s[3]))
+        return (s[0]-'0') < 24 && (s[2]-'0')*10 + (s[3]-'0') < 60;
+    /* HH:MM */
+    if (len == 5 && s[2] == ':' && isdigit(s[0]) && isdigit(s[1])
+        && isdigit(s[3]) && isdigit(s[4]))
+        return (s[0]-'0')*10 + (s[1]-'0') < 24
+            && (s[3]-'0')*10 + (s[4]-'0') < 60;
+    /* HH:MM:SS */
+    if (len == 8 && s[2] == ':' && s[5] == ':'
+        && isdigit(s[0]) && isdigit(s[1]) && isdigit(s[3])
+        && isdigit(s[4]) && isdigit(s[6]) && isdigit(s[7]))
+        return (s[0]-'0')*10 + (s[1]-'0') < 24
+            && (s[3]-'0')*10 + (s[4]-'0') < 60
+            && (s[6]-'0')*10 + (s[7]-'0') < 60;
+    return 0;
+}
+
+/* Вывод времени: ручное или реальное */
 void print_time(void) {
+    if (manual_time) {
+        printf("-t: %s\n", manual_time);
+        return;
+    }
     time_t now = time(NULL);
     struct tm *lt = localtime(&now);
     if (!lt) { perror("localtime"); return; }
@@ -123,10 +153,19 @@ int main(int argc, char *argv[]) {
             print_time();
             break;
         case 'T':
-            if (setenv("TZ", list[i].arg, 1) == 0) {
-                tzset();
-                printf("-T: TZ set to '%s'\n", list[i].arg);
-            } else perror("-T: setenv");
+            if (is_time_arg(list[i].arg)) {
+                /* Ручное время HH:MM */
+                free(manual_time);
+                manual_time = strdup(list[i].arg);
+                if (!manual_time) { perror("strdup"); break; }
+                printf("-T: время установлено в '%s'\n", manual_time);
+            } else {
+                /* Часовой пояс */
+                if (setenv("TZ", list[i].arg, 1) == 0) {
+                    tzset();
+                    printf("-T: TZ set to '%s'\n", list[i].arg);
+                } else perror("-T: setenv");
+            }
             break;
         case '?':
         default:
@@ -135,6 +174,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    free(manual_time);
     for (i = 0; i < count; i++) free(list[i].arg);
     free(list);
     return 0;
