@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <limits.h>
+#include <time.h>
 #include <sys/resource.h>
 
 extern char **environ;
@@ -15,8 +16,21 @@ struct opt_rec {
     char *arg;
 };
 
+void print_time(void) {
+    time_t now = time(NULL);
+    struct tm *lt = localtime(&now);
+    if (!lt) { perror("localtime"); return; }
+    const char *zone = tzname[lt->tm_isdst > 0 ? 1 : 0];
+    printf("-t: %02d/%02d/%04d %02d:%02d %s\n",
+           lt->tm_mon + 1, lt->tm_mday, lt->tm_year + 1900,
+           lt->tm_hour, lt->tm_min, zone);
+}
+
 int main(int argc, char *argv[]) {
-    const char *optstring = "ispuU:cC:dvV:";
+    setenv("TZ", "America/Los_Angeles", 1);
+    tzset();
+
+    const char *optstring = "ispuU:cC:dvV:tT:";
     struct opt_rec *list = NULL;
     int count = 0;
     int c, i;
@@ -104,6 +118,15 @@ int main(int argc, char *argv[]) {
         case 'V':
             if (putenv(list[i].arg) == 0) printf("-V: set '%s'\n", list[i].arg);
             else perror("-V: putenv");
+            break;
+        case 't':
+            print_time();
+            break;
+        case 'T':
+            if (setenv("TZ", list[i].arg, 1) == 0) {
+                tzset();
+                printf("-T: TZ set to '%s'\n", list[i].arg);
+            } else perror("-T: setenv");
             break;
         case '?':
         default:
