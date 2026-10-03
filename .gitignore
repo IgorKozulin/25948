@@ -4,3 +4,4 @@ setuid_test
 data.txt
 *.o
 a.out
+list_strings
