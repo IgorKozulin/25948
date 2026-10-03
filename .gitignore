@@ -1,3 +1,6 @@
 options
+ex_time
+setuid_test
+data.txt
 *.o
 a.out
