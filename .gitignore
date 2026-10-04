@@ -5,4 +5,5 @@ data.txt
 *.o
 a.out
 list_strings
-Ðline_lookup
+line_lookup
+line_lookup_alarm
