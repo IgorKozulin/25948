@@ -7,3 +7,4 @@ a.out
 list_strings
 line_lookup
 line_lookup_alarm
+line_lookup_mmap
