@@ -15,7 +15,7 @@ typedef struct {
 } OptionRecord;
 
 int main(int argc, char *argv[]) {
-    char *options = "ispuU:cC:dvV:";
+    char *options = "ispuU:cC:dvV:t:";
     int c;
     
     // Выделяем память под массив структур (максимум опций = argc)
@@ -134,6 +134,28 @@ int main(int argc, char *argv[]) {
                     printf("[-V] Environment variable added/modified: %s\n", records[i].arg);
                 } else {
                     perror("[-V] putenv failed");
+                }
+                break;
+	    case 't':
+                if (records[i].arg != NULL) {
+                    setenv("TZ", records[i].arg, 1);
+                    tzset();
+
+                    time_t now;
+                    time(&now);
+                    struct tm *sp = localtime(&now);
+
+                    printf("[-t] Зона: %s | Время: %02d/%02d/%04d %02d:%02d %s\n", 
+                        records[i].arg,
+                        sp->tm_mon + 1,
+                        sp->tm_mday,
+                        sp->tm_year + 1900,
+                        sp->tm_hour,
+                        sp->tm_min,
+                        tzname[sp->tm_isdst]);
+                }
+                else {
+                    printf("[-t] Ошибка: не указан часовой пояс\n");
                 }
                 break;
         }
