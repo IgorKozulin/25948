@@ -1,0 +1,13 @@
+# Compiled binaries
+options
+*.o
+a.out
+
+# Core dumps
+core
+core.*
+
+# Editor/OS temp files
+*~
+*.swp
+.DS_Store
