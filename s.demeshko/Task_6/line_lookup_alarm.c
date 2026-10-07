@@ -2,11 +2,25 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 
 typedef struct {
     long offset;
     int length;
 } LineInfo;
+
+static int g_fd = -1;
+
+void alarm_handler(int sig) {
+    (void)sig;
+    printf("\n[TIMEOUT] 5 секунд истекли! Вывожу весь файл:\n");
+    lseek(g_fd, 0L, SEEK_SET);
+    char buf[4096];
+    ssize_t n;
+    while ((n = read(g_fd, buf, sizeof(buf))) > 0)
+        write(STDOUT_FILENO, buf, n);
+    _exit(0);
+}
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
@@ -19,6 +33,7 @@ int main(int argc, char *argv[]) {
         perror("open");
         return 1;
     }
+    g_fd = fd;
 
     LineInfo *table = NULL;
     int num_lines = 0, capacity = 0;
@@ -27,7 +42,6 @@ int main(int argc, char *argv[]) {
 
     while (read(fd, &ch, 1) == 1) {
         long current_pos = lseek(fd, 0L, SEEK_CUR);
-
         if (ch == '\n') {
             if (num_lines >= capacity) {
                 capacity = capacity ? capacity * 2 : 16;
@@ -60,11 +74,18 @@ int main(int argc, char *argv[]) {
     }
     printf("-------------------------\n");
 
+    signal(SIGALRM, alarm_handler);
+
     int n;
     while (1) {
-        printf("Enter line number (0 to quit): ");
+        printf("Enter line number (0 to quit, 5 sec timeout): ");
         fflush(stdout);
-        if (scanf("%d", &n) != 1) break;
+        alarm(5);
+        if (scanf("%d", &n) != 1) {
+            alarm(0);
+            break;
+        }
+        alarm(0);
         if (n == 0) break;
         if (n < 1 || n > num_lines) {
             printf("Invalid line number\n");

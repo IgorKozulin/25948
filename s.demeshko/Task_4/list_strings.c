@@ -7,21 +7,14 @@ struct Node {
     struct Node *next;
 };
 
-void append(struct Node **head, const char *str) {
+void prepend(struct Node **head, const char *str) {
     struct Node *new_node = malloc(sizeof(struct Node));
     if (!new_node) { perror("malloc"); exit(1); }
     new_node->data = malloc(strlen(str) + 1);
     if (!new_node->data) { perror("malloc"); exit(1); }
     strcpy(new_node->data, str);
-    new_node->next = NULL;
-
-    if (*head == NULL) {
-        *head = new_node;
-        return;
-    }
-    struct Node *cur = *head;
-    while (cur->next) cur = cur->next;
-    cur->next = new_node;
+    new_node->next = *head;
+    *head = new_node;
 }
 
 void free_list(struct Node *head) {
@@ -48,10 +41,10 @@ int main(void) {
         if (buffer[0] == '.') break;
         if (buffer[0] == '\0') continue;
 
-        append(&head, buffer);
+        prepend(&head, buffer);
     }
 
-    printf("\n--- Введённые строки ---\n");
+    printf("\n--- Введённые строки в обратном порядке ---\n");
     for (struct Node *cur = head; cur; cur = cur->next)
         printf("%s\n", cur->data);
 
