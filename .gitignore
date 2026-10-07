@@ -1,0 +1,10 @@
+options
+ex_time
+setuid_test
+data.txt
+*.o
+a.out
+list_strings
+line_lookup
+line_lookup_alarm
+line_lookup_mmap
