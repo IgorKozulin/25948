@@ -28,6 +28,7 @@ static void my_time(){
 int main(void) {
     if  (getuid() == geteuid()){
          my_time();
+         return 0;
     }
     else{
         printf("You cannot find out this information.\n");
