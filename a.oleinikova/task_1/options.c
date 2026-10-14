@@ -29,6 +29,8 @@ typedef struct {
 static OptEntry opts[100];
 static int opt_count = 0;
 
+static void option(char opt, char *arg);
+
 int main(int argc, char *argv[]){
     int c;
     while ((c = getopt(argc, argv, "ispuU:cC:dvV:")) != -1){
@@ -41,11 +43,11 @@ int main(int argc, char *argv[]){
         opt_count++;
     }
     for (int i = opt_count - 1; i >= 0; i--)
-        execute_option(opts[i].opt, opts[i].arg);
+        option(opts[i].opt, opts[i].arg);
     return 0;
 }
 
-static void execute_option(char opt, char *arg) {
+static void option(char opt, char *arg) {
     switch (opt) {
         case 'i':
             printf("Real UID: %d, Effective UID: %d\n", getuid(), geteuid()); 

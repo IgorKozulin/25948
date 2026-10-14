@@ -4,19 +4,19 @@
 #include <sys/types.h>
 
 static void show_ids(const char *label);
-static void try_open(const char *path);
+static void f_open(const char *path);
 
 
 int main(void) {
     show_ids("before");
-    open("data.txt");
+    f_open("data.txt");
 
     if (setuid(getuid()) != 0) {
          perror("setuid");
     }
 
     show_ids("after");
-    open("data.txt");
+    f_open("data.txt");
     return 0;
 }
 
@@ -24,7 +24,7 @@ static void show_ids(const char *label) {
     printf("[%s] Real UID=%d, Effective UID=%d\n",label, getuid(), geteuid());
 }
 
-static void open(const char *path) {
+static void f_open(const char *path) {
     FILE *f = fopen(path, "r");
     if (f){
         printf("Opened %s successfully\n", path); 
