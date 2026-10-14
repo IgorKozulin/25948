@@ -1,0 +1,11 @@
+[33mcommit ab30bc45fb343af5eb3f09261877bce4d89d4341[m[33m ([m[1;31morigin/d.vitman-task0[m[33m)[m
+Author: d.vitman <d.vitman@g.nsu.ru>
+Date:   Wed Oct 14 04:36:23 2026 +0700
+
+    task1
+
+ 25948                          |   1 [31m-[m
+ d.vitman/task0/task1/Makefile  |  14 [32m++[m
+ d.vitman/task0/task1/options.c | 228 [32m++++++++++++++++++++++++++++++++[m
+ test.txt                       |   1 [31m-[m
+ 4 files changed, 242 insertions(+), 2 deletions(-)

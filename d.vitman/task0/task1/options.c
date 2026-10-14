@@ -16,7 +16,7 @@ struct option_rec {
     char *arg;        
 };
 
-void do_i(void) {
+void do_i(void) { //идентификаторы
     printf("-i\n");
     printf("Real UID:      %d\n", (int)getuid());
     printf("Effective UID: %d\n", (int)geteuid());
@@ -24,7 +24,7 @@ void do_i(void) {
     printf("Effective GID: %d\n", (int)getegid());
 }
 
-void do_s(void) {
+void do_s(void) { // изменение лидера группы
     printf("-s\n");
     
     if (setpgid(0, 0) == -1) {
@@ -34,7 +34,7 @@ void do_s(void) {
     }
 }
 
-void do_p(void) {
+void do_p(void) {// идентификаторы процесса, родителя и группы
     printf("-p\n");
     printf("PID:  %d\n", (int)getpid());
     printf("PPID: %d\n", (int)getppid());
@@ -42,7 +42,7 @@ void do_p(void) {
 }
 
 
-void do_u(void) {
+void do_u(void) { //ulimit
     struct rlimit rl;
     printf("-u\n");
     if (getrlimit(RLIMIT_FSIZE, &rl) == -1) {
@@ -55,7 +55,7 @@ void do_u(void) {
         printf("  (soft limit is infinity)\n");
 }
 
-/* -U new_ulimit: изменяет ulimit */
+// изменяет ulimit
 void do_U(const char *arg) {
     struct rlimit rl;
     long newval;
@@ -63,8 +63,7 @@ void do_U(const char *arg) {
 
     printf("-U %s\n", arg);
 
-    /* Преобразуем строку в число. atol() не проверяет ошибки,
-     * поэтому используем strtol() с проверкой. */
+    // преобразуем строку в число
     errno = 0;
     newval = strtol(arg, &endptr, 10);
 
@@ -86,7 +85,7 @@ void do_U(const char *arg) {
     printf("ulimit changed to %ld\n", newval);
 }
 
-void do_c(void) {
+void do_c(void) {// размер core-файла
     struct rlimit rl;
     printf("-c\n");
     if (getrlimit(RLIMIT_CORE, &rl) == -1) {
@@ -99,7 +98,7 @@ void do_c(void) {
         printf("  (soft limit is infinity)\n");
 }
 
-void do_C(const char *arg) {
+void do_C(const char *arg) { // изменяет размер core-файла
     struct rlimit rl;
     long newval;
     char *endptr;
@@ -127,7 +126,7 @@ void do_C(const char *arg) {
     printf("core file size changed to %ld\n", newval);
 }
 
-void do_d(void) {
+void do_d(void) { //текущая директория
     char buf[PATH_MAX];
     printf("-d\n");
     if (getcwd(buf, sizeof(buf)) == NULL) {
@@ -137,7 +136,7 @@ void do_d(void) {
     printf("Current directory: %s\n", buf);
 }
 
-void do_v(void) {
+void do_v(void) { // переменные среды и их значения
     char **p;
     printf("-v\n");
     printf("Environment variables:\n");
@@ -146,7 +145,7 @@ void do_v(void) {
     }
 }
 
-void do_V(const char *arg) {
+void do_V(const char *arg) { // изменение переменных сред
     printf("-V %s\n", arg);
 
     if (strchr(arg, '=') == NULL) {
@@ -182,14 +181,14 @@ int main(int argc, char *argv[]) {
         }
 
         switch (opt) {
-            case 'i': case 's': case 'p': case 'u':
+            case 'i': case 's': case 'p': case 'u':   // без аргументов
             case 'c': case 'd': case 'v':
                 opts[nopts].letter = (char)opt;
                 opts[nopts].arg = NULL;
                 nopts++;
                 break;
 
-            case 'U': case 'C': case 'V':
+            case 'U': case 'C': case 'V':        // с аргументами
                 opts[nopts].letter = (char)opt;
                 opts[nopts].arg = optarg;
                 nopts++;
