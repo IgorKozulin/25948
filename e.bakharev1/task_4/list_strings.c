@@ -30,9 +30,13 @@ void append(struct Node **head, const char *str) {
 
 void print_list(struct Node *head) {
     struct Node *current = head;
+    int count = 1;
     while (current != NULL) {
-        printf("%s\n", current->data);
+        if (count % 2 == 0) {
+            printf("%s\n", current->data);
+        }
         current = current->next;
+        count++;
     }
 }
 

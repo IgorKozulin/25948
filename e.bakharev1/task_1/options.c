@@ -5,10 +5,11 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
+#include <time.h>
 
 extern char **environ;
 
-typedef enum { OP_I, OP_S, OP_P, OP_U, OP_U_VAL, OP_C, OP_C_VAL, OP_D, OP_V, OP_V_VAL } OpType;
+typedef enum { OP_I, OP_S, OP_P, OP_U, OP_U_VAL, OP_C, OP_C_VAL, OP_D, OP_V, OP_V_VAL, OP_T } OpType;
 
 typedef struct {
     OpType type;
@@ -70,6 +71,21 @@ void execute_action(Action action) {
             if (putenv(action.arg) != 0) perror("putenv failed");
             else printf("Environment variable set: %s\n", action.arg);
             break;
+        case OP_T: {
+            setenv("TZ", "Asia/Novosibirsk", 1);
+            tzset();
+            time_t now;
+            time(&now);
+            struct tm *sp = localtime(&now);
+            printf("%02d/%02d/%04d %02d:%02d %s\n",
+                   sp->tm_mday,
+                   sp->tm_mon + 1,
+                   sp->tm_year + 1900,
+                   sp->tm_hour,
+                   sp->tm_min,
+                   tzname[sp->tm_isdst]);
+            break;
+        }
     }
 }
 
@@ -77,7 +93,7 @@ int main(int argc, char *argv[]) {
     int c;
     Action actions[argc];
     int action_count = 0;
-    while ((c = getopt(argc, argv, "ispuU:cC:dvV:")) != -1) {
+    while ((c = getopt(argc, argv, "ispuU:cC:dvV:t")) != -1) {
         switch (c) {
             case 'i': actions[action_count++].type = OP_I; break;
             case 's': actions[action_count++].type = OP_S; break;
@@ -89,6 +105,7 @@ int main(int argc, char *argv[]) {
             case 'd': actions[action_count++].type = OP_D; break;
             case 'v': actions[action_count++].type = OP_V; break;
             case 'V': actions[action_count].type = OP_V_VAL; actions[action_count++].arg = optarg; break;
+            case 't': actions[action_count++].type = OP_T; break;
             case '?':
                 fprintf(stderr, "Недопустимая опция: %c\n", optopt);
                 return 1;
