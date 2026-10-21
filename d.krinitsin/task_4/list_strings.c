@@ -38,10 +38,14 @@ static void append(struct Node **head, const char *str)
     cur->next = node;
 }
 
-static void print_list(struct Node *head)
+static void print_odd_lines(struct Node *head)
 {
+    int index = 1;
     for (struct Node *cur = head; cur != NULL; cur = cur->next) {
-        printf("%s\n", cur->data);
+        if (index % 2 == 1) {
+            printf("%s\n", cur->data);
+        }
+        index++;
     }
 }
 
@@ -79,7 +83,7 @@ int main(void)
         }
     }
 
-    print_list(head);
+    print_odd_lines(head);
     free_list(head);
 
     return 0;
