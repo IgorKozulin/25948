@@ -1,0 +1,10 @@
+# Бинарники
+a.oleinikova/task_*/options
+a.oleinikova/task_*/ex_time
+a.oleinikova/task_*/setuid_test
+a.oleinikova/task_*/list_strings
+a.oleinikova/task_*/line_lookup
+a.oleinikova/task_*/line_lookup_alarm
+a.oleinikova/task_*/line_lookup_mmap
+a.oleinikova/task_2_and_3/time_NSK_and_setuid_test
+*.o
