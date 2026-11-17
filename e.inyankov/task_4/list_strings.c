@@ -55,15 +55,49 @@ void free_list(Node *head) {
     }
 }
 
-// Дополнительная функция для вывода списка
 void print_list(Node *head) {
+    // Если список пуст, выводить нечего
+    if (head == NULL) {
+        printf("list is empty");
+        return;
+    }
+
+    // 1. Находим и выводим последний элемент
     Node *current = head;
-    while (current != NULL) {
+    while (current->next != NULL) {
+        current = current->next; // Шагаем строго по указателям ->next
+    }
+    printf("%s\n", current->data);
+
+    // 2. Выводим весь список с самого начала
+    current = head;
+    current = current->next;
+    while (current != NULL && current->next != NULL) {
         printf("%s\n", current->data);
         current = current->next;
     }
-}
 
+    // 3. Выводим первый элемент
+    // Голова списка (head) всегда указывает на первый элемент
+    printf("%s\n", head->data);
+}
+void swap_first_and_last_data(Node *head) {
+    // Если список пуст или в нем только 1 элемент - ничего не делаем
+    if (head == NULL || head->next == NULL) {
+        return;
+    }
+
+    // Находим последний элемент
+    Node *last = head;
+    while (last->next != NULL) {
+        last = last->next;
+    }
+
+    // Меняем местами указатели на строки
+    char *temp = head->data;
+    head->data = last->data;
+    last->data = temp;
+}
 // 4. Основная логика
 int main() {
     Node *head = NULL;
