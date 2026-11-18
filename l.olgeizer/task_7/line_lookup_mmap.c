@@ -1,151 +1,68 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <signal.h>
-#include <sys/mman.h>
+#include <poll.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 
-static char *g_map = MAP_FAILED;
-static size_t g_size = 0;
-
-typedef struct {
-    off_t offset;
-    int length;
-} LineInfo;
-
-void alarm_handler(int sig) {
-    (void)sig;
-    const char msg[] = "\n[TIMEOUT] Time is up! Printing full file content...\n";
-    write(STDOUT_FILENO, msg, sizeof(msg) - 1);
-
-    if (g_map != MAP_FAILED && g_size > 0) {
-        write(STDOUT_FILENO, g_map, g_size);
-    }
-    _exit(EXIT_SUCCESS);
-}
+struct { off_t off; int len; } tbl[1024];
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        fprintf(stderr, "Использование: %s <имя_файла>\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-
+    if (argc < 2) return 1;
     int fd = open(argv[1], O_RDONLY);
-    if (fd == -1) {
-        perror("open");
-        return EXIT_FAILURE;
-    }
+    if (fd < 0) return 1;
 
     struct stat st;
-    if (fstat(fd, &st) == -1) {
-        perror("fstat");
-        close(fd);
-        return EXIT_FAILURE;
-    }
+    fstat(fd, &st);
+    if (st.st_size == 0) return 0;
+    off_t size = st.st_size;
 
-    if (st.st_size == 0) {
-        printf("File is empty.\n");
-        close(fd);
-        return EXIT_SUCCESS;
-    }
+    char *map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 
-    g_size = (size_t)st.st_size;
-
-    g_map = (char *)mmap(NULL, g_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (g_map == MAP_FAILED) {
-        perror("mmap");
-        close(fd);
-        return EXIT_FAILURE;
-    }
-
-    close(fd);
-
-    int capacity = 16, num_lines = 0;
-    LineInfo *table = (LineInfo *)malloc(capacity * sizeof(LineInfo));
-    if (table == NULL) {
-        perror("malloc");
-        munmap(g_map, g_size);
-        return EXIT_FAILURE;
-    }
-
-    off_t line_start = 0;
-    for (size_t i = 0; i < g_size; i++) {
-        if (g_map[i] == '\n') {
-            if (num_lines >= capacity) {
-                capacity *= 2;
-                LineInfo *temp = (LineInfo *)realloc(table, capacity * sizeof(LineInfo));
-                if (!temp) {
-                    perror("realloc");
-                    free(table);
-                    munmap(g_map, g_size);
-                    return EXIT_FAILURE;
-                }
-                table = temp;
-            }
-            table[num_lines].offset = line_start;
-            table[num_lines].length = (int)(i - line_start + 1);
-            num_lines++;
-            line_start = (off_t)(i + 1);
+    /* 1. Таблица строк */
+    int n = 0;
+    off_t start = 0, total = 0;
+    for (off_t i = 0; i < size; i++) {
+        if (map[i] == '\n') {
+            tbl[n].off = start;
+            tbl[n++].len = i - start + 1;
+            start = i + 1;
         }
     }
-
-    if ((size_t)line_start < g_size) {
-        if (num_lines >= capacity) {
-            capacity++;
-            LineInfo *temp = (LineInfo *)realloc(table, capacity * sizeof(LineInfo));
-            if (temp) table = temp;
-        }
-        if (num_lines < capacity) {
-            table[num_lines].offset = line_start;
-            table[num_lines].length = (int)(g_size - line_start);
-            num_lines++;
-        }
+    if (start < size) {
+        tbl[n].off = start;
+        tbl[n++].len = size - start;
     }
 
+    /* 2. Вывод таблицы с размерами */
     printf("--- Debug: Line Table ---\n");
-    for (int i = 0; i < num_lines; i++) {
-        printf("Line %d: Offset = %ld, Length = %d\n", i + 1, (long)table[i].offset, table[i].length);
+    for (int i = 0; i < n; i++) {
+        printf("Line %d: Offset = %ld, Length = %d, Size = %d\n",
+               i + 1, (long)tbl[i].off, tbl[i].len, tbl[i].len);
+        total += tbl[i].len;
     }
-    printf("-------------------------\n");
+    printf("Total file size: %ld bytes\n-------------------------\n", (long)total);
 
-    signal(SIGALRM, alarm_handler);
-
-    int req_line;
+    /* 3. Опрос с таймаутом 5 секунд (5000 мс) */
     while (1) {
-        printf("Enter line number (0 to quit, 5 sec timeout): ");
+        printf("Enter line number (0 to quit): ");
         fflush(stdout);
 
-        alarm(5);
-        int res = scanf("%d", &req_line);
-        alarm(0);
-
-        if (res != 1) {
-            int c;
-            while ((c = getchar()) != '\n' && c != EOF);
-            printf("Некорректный ввод. Введите число.\n");
-            continue;
-        }
-
-        if (req_line == 0) {
+        struct pollfd pfd = { 0, POLLIN, 0 };
+        if (poll(&pfd, 1, 5000) == 0) {
+            printf("\nTimeout (5 sec)! Printing whole file:\n");
+            write(1, map, size);
             break;
         }
 
-        if (req_line < 1 || req_line > num_lines) {
-            fprintf(stderr, "Недопустимый номер строки. Диапазон: 1..%d\n", num_lines);
-            continue;
-        }
-
-        LineInfo info = table[req_line - 1];
-
-        fwrite(g_map + info.offset, 1, info.length, stdout);
-        if (g_map[info.offset + info.length - 1] != '\n') {
-            printf("\n");
+        int req;
+        if (scanf("%d", &req) != 1 || req == 0) break;
+        if (req > 0 && req <= n) {
+            write(1, map + tbl[req - 1].off, tbl[req - 1].len);
         }
     }
 
-    free(table);
-    munmap(g_map, g_size);
-
-    return EXIT_SUCCESS;
+    munmap(map, size);
+    close(fd);
+    return 0;
 }
