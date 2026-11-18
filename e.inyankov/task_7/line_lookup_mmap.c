@@ -118,12 +118,15 @@ int main(int argc, char *argv[]) {
         table[num_lines].length = current_length;
         num_lines++;
     }
-
+    
+    int cnt_all = 0;
     // Отладочный вывод таблицы
     printf("--- Debug: Line Table ---\n");
     for (int i = 0; i < num_lines; i++) {
-        printf("Line %d: Offset = %ld, Length = %d\n", i + 1, table[i].offset, table[i].length);
-    }
+        printf("Line %d: Offset = %ld, Length = %d, lenght_bits = %d\n", i + 1, table[i].offset, table[i].length, table[i].length * 8);
+        cnt_all += table[i].length;
+}
+    printf("size file %d\n", cnt_all);
     printf("-------------------------\n");
 
     // Установка обработчика сигнала SIGALRM
@@ -146,7 +149,7 @@ int main(int argc, char *argv[]) {
         alarm(0); // Ввод успешен, отключаем таймер
 
         if (line_num == 0) {
-            break;
+	    break;
         }
 
         if (line_num < 1 || line_num > num_lines) {
