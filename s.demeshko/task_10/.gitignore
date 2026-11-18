@@ -1,0 +1,4 @@
+run_command
+crash
+*.o
+out.txt
